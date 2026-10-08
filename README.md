@@ -1,4 +1,6 @@
-# Agentic Harness Take-Home
+# Agentic Harness Take-Home (Old)
+
+Note: Refer to **GUIDE.md** for the user guide to run the harness.
 
 A system for running AI agents against benchmark tasks.
 
@@ -20,7 +22,7 @@ Run the setup wizard to configure your default model and API key:
 mini-extra config setup
 ```
 
-Read more about how to configure mini-swe-agent: https://mini-swe-agent.com/latest/usage/config/
+Read more about how to configure mini-swe-agent: [https://mini-swe-agent.com/latest/usage/config/](https://mini-swe-agent.com/latest/usage/config/)
 
 ### Run Examples
 
@@ -54,6 +56,8 @@ These commands demonstrate the full workflow: setup → run agent → evaluate.
 └── Makefile
 ```
 
+
+
 ## Workflow
 
 Each benchmark follows a three-step process:
@@ -62,9 +66,14 @@ Each benchmark follows a three-step process:
 2. **Execute**: Run agent to solve the task
 3. **Evaluate**: Check if task was completed correctly
 
+
+
 ## Benchmarks
 
+
+
 ### bash-operations
+
 - 5 simple bash tasks
 - Uses `alpine:latest` Docker image
 - CLI: `--workspace-dir <path> --task <id>`
@@ -73,6 +82,7 @@ Each benchmark follows a three-step process:
 [Full documentation](benchmarks/bash-operations/README.md)
 
 ### python-tasks
+
 - 3 simple Python tasks
 - Uses `python:3.11-slim` Docker image
 - CLI: `<task_id> --workspace <path>` (positional argument!)
@@ -83,6 +93,7 @@ Each benchmark follows a three-step process:
 ## mini-swe-agent
 
 Important flags:
+
 - `--exit-immediately`: Required to prevent hanging
 - `-y/--yolo`: Skip action confirmations
 - `-t/--task`: Task description
@@ -94,3 +105,4 @@ For more information, run `mini --help` or read the [mini-swe-agent quickstart](
 - Benchmarks have intentionally different interfaces to test flexibility
 - Tasks specify `docker_image` field for container execution
 - Each benchmark has its own evaluation logic
+
