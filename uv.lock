@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 5
 requires-python = ">=3.11"
 resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'win32'",
@@ -17,14 +17,18 @@ source = { editable = "." }
 dependencies = [
     { name = "click" },
     { name = "mini-swe-agent" },
+    { name = "pip" },
     { name = "pytest" },
+    { name = "pyyaml" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "click", specifier = ">=8.3.1" },
     { name = "mini-swe-agent", editable = "agents/mini-swe-agent" },
+    { name = "pip" },
     { name = "pytest", specifier = ">=7.0.0" },
+    { name = "pyyaml", specifier = ">=6" },
 ]
 
 [[package]]
@@ -919,10 +923,12 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "boto3", marker = "extra == 'modal'" },
+    { name = "contree-sdk", marker = "extra == 'contree'", specifier = ">=0.2.0" },
     { name = "datasets" },
     { name = "jinja2" },
-    { name = "litellm", specifier = ">=1.75.5" },
+    { name = "litellm", specifier = ">=1.75.5,!=1.82.7,!=1.82.8" },
     { name = "mike", marker = "extra == 'dev'" },
+    { name = "mini-swe-agent", extras = ["contree"], marker = "extra == 'full'" },
     { name = "mini-swe-agent", extras = ["dev"], marker = "extra == 'full'" },
     { name = "mini-swe-agent", extras = ["modal"], marker = "extra == 'full'" },
     { name = "mkdocs-glightbox", marker = "extra == 'dev'" },
@@ -952,7 +958,7 @@ requires-dist = [
     { name = "textual" },
     { name = "typer" },
 ]
-provides-extras = ["full", "modal", "dev"]
+provides-extras = ["full", "modal", "dev", "contree"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -1264,6 +1270,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/34/a0/ed160a00fb4f37d806406bc0a79a8b62fe67f29d00950f8d16203ff3409b/pandas-3.0.0-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:125eb901e233f155b268bbef9abd9afb5819db74f0e677e89a61b246228c71ac", size = 11799386, upload-time = "2026-01-21T15:51:57.457Z" },
     { url = "https://files.pythonhosted.org/packages/36/c8/2ac00d7255252c5e3cf61b35ca92ca25704b0188f7454ca4aec08a33cece/pandas-3.0.0-cp314-cp314t-win_amd64.whl", hash = "sha256:b86d113b6c109df3ce0ad5abbc259fe86a1bd4adfd4a31a89da42f84f65509bb", size = 10873041, upload-time = "2026-01-21T15:52:00.034Z" },
     { url = "https://files.pythonhosted.org/packages/e6/3f/a80ac00acbc6b35166b42850e98a4f466e2c0d9c64054161ba9620f95680/pandas-3.0.0-cp314-cp314t-win_arm64.whl", hash = "sha256:1c39eab3ad38f2d7a249095f0a3d8f8c22cc0f847e98ccf5bbe732b272e2d9fa", size = 9441003, upload-time = "2026-01-21T15:52:02.281Z" },
+]
+
+[[package]]
+name = "pip"
+version = "26.2.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ae/15/4500e320e6b101ec3b719ae85b697d9940b6cda672bc555bd6016fc60c6f/pip-26.2.1.tar.gz", hash = "sha256:f6ad667e89a1fe78046c8f13232b247200f5258d7828f3f7883d660878e0813f", size = 1848877, upload-time = "2026-08-04T22:51:14.148Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f3/6e/1736e5b4ae2b778ef2f81c47d797de9f891d4d8acb047a24ca37a60294dd/pip-26.2.1-py3-none-any.whl", hash = "sha256:71138adf1f4ca900cdb7d289c21b7494329f2332b6d85f0e1c42108c0384ed3e", size = 1816632, upload-time = "2026-08-04T22:51:12.472Z" },
 ]
 
 [[package]]
