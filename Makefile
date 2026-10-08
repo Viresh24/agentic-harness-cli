@@ -1,4 +1,4 @@
-.PHONY: init install bash-example py-example
+.PHONY: init install bash-example py-example test
 
 init:
 	@echo "Initializing git submodules..."
@@ -15,3 +15,6 @@ bash-example:
 
 py-example:
 	bash examples/run_python_example.sh
+
+test:
+	uv run pytest -v -rs

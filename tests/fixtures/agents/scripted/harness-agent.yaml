@@ -1,0 +1,3 @@
+# LLM-free agent for tests and Docker smoke checks: runs one fixed shell command in the task sandbox.
+adapter: command
+command: "echo 'Hello World' > hello.txt"
