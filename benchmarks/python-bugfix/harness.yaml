@@ -1,0 +1,9 @@
+# Harness adapter for python-bugfix.
+name: python-bugfix
+dataset: dataset.json
+fields: {id: id, prompt: description, docker_image: image}
+setup:    ["{python}", "setup.py", "{task_id}", "{workspace}"]
+evaluate: ["{python}", "evaluate.py", "{task_id}", "{workspace}"]
+pass_from: json.passed     # evaluate.py always exits 0; score = fraction of tests passing
+prompt_template: "{prompt}\n\nThe code ({module}) and its tests ({test_file}) are in the current working directory. Fix the bug in the code, not the tests: any change to {test_file} scores zero. Run the tests with `python -m pytest {test_file}` (if pytest is missing, install it with `pip install pytest`)."
+timeout: 120

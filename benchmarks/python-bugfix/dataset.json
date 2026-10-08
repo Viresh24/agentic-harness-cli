@@ -1,0 +1,37 @@
+[
+  {
+    "id": "bug-001",
+    "description": "paginate() in pagination.py returns the wrong items for a page and doesn't reject invalid pages. Pages are 1-indexed.",
+    "image": "python:3.11-slim",
+    "module": "pagination.py",
+    "test_file": "test_pagination.py"
+  },
+  {
+    "id": "bug-002",
+    "description": "add_tag() in tags.py leaks tags between calls and modifies the list passed to it.",
+    "image": "python:3.11-slim",
+    "module": "tags.py",
+    "test_file": "test_tags.py"
+  },
+  {
+    "id": "bug-003",
+    "description": "round_price() in money.py rounds some prices down when they should round up (e.g. 2.675 should become 2.68).",
+    "image": "python:3.11-slim",
+    "module": "money.py",
+    "test_file": "test_money.py"
+  },
+  {
+    "id": "bug-004",
+    "description": "median() in stats.py gives wrong answers for some inputs, changes the caller's list, and fails badly on empty input.",
+    "image": "python:3.11-slim",
+    "module": "stats.py",
+    "test_file": "test_stats.py"
+  },
+  {
+    "id": "bug-005",
+    "description": "top_words() in words.py miscounts words that differ only in case or punctuation, and breaks ties inconsistently.",
+    "image": "python:3.11-slim",
+    "module": "words.py",
+    "test_file": "test_words.py"
+  }
+]
