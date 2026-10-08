@@ -1,8 +1,7 @@
 """CLI for the agentic harness system."""
 
 import os
-import subprocess
-import sys
+from datetime import datetime
 
 import click
 
@@ -12,6 +11,7 @@ from agentic_harness.executor import DEFAULT_TASK_TIMEOUT, execute_run
 from agentic_harness.models import TERMINAL_TASK_STATUSES, RunRecord, RunStatus, TaskResult
 from agentic_harness.report import render_json, render_summary, render_table
 from agentic_harness.store import RunStore
+from agentic_harness.worker import pid_alive, run_worker
 
 RENDERERS = {"json": render_json, "table": render_table, "summary": render_summary}
 
@@ -20,6 +20,8 @@ RENDERERS = {"json": render_json, "table": render_table, "summary": render_summa
     epilog="""\b
 Examples:
   harness run --agent agents/mini-swe-agent --benchmark bash-operations --task_ids bash-001
+  harness worker --concurrency 2
+  harness list
   harness status --run_id abc123
   harness results --run_id abc123"""
 )
@@ -35,7 +37,7 @@ def cli():
     default=None,
     help="Comma-separated list of task IDs to run (runs all tasks if not provided)",
 )
-@click.option("--wait", is_flag=True, help="Run in the foreground and print results, instead of in the background")
+@click.option("--wait", is_flag=True, help="Run now in the foreground instead of queueing for a worker")
 @click.option("--task-timeout", default=DEFAULT_TASK_TIMEOUT, show_default=True, help="Seconds allowed per task")
 def run(agent: str, benchmark: str, task_ids: str | None, wait: bool, task_timeout: int):
     """Run an agent against a benchmark."""
@@ -52,6 +54,7 @@ def run(agent: str, benchmark: str, task_ids: str | None, wait: bool, task_timeo
         benchmark=str(resolve_benchmark_dir(benchmark)),
         task_ids=[t.id for t in tasks],
         config={"task_timeout": task_timeout},
+        status=RunStatus.RUNNING if wait else RunStatus.QUEUED,  # --wait runs never enter the queue
     )
     click.echo(f"Run ID: {record.run_id}")
 
@@ -62,16 +65,42 @@ def run(agent: str, benchmark: str, task_ids: str | None, wait: bool, task_timeo
         click.echo(render_summary(store.get_run(record.run_id), store.get_task_results(record.run_id)))
         return
 
-    log = store.artifacts_dir(record.run_id) / "executor.log"
-    with log.open("w") as f:
-        subprocess.Popen(
-            [sys.executable, "-m", "agentic_harness.executor", record.run_id],
-            stdout=f,
-            stderr=subprocess.STDOUT,
-            start_new_session=True,  # keeps running after this command exits
-        )
-    click.secho("Benchmark run submitted", fg="green")
+    click.secho("Benchmark run queued", fg="green")
+    click.echo("A worker executes queued runs; start one with: harness worker")
     click.echo(f"Check progress: harness status --run_id {record.run_id}")
+
+
+@cli.command()
+@click.option("--concurrency", default=2, show_default=True, help="Maximum number of runs executing at once")
+def worker(concurrency: int):
+    """Execute queued runs until stopped (Ctrl-C waits for running runs; press again to abort them)."""
+    run_worker(concurrency, log=click.echo)
+
+
+@cli.command(name="list")
+@click.option("--all", "show_all", is_flag=True, help="Include finished runs")
+def list_runs(show_all: bool):
+    """List active runs (queued or running)."""
+    store = RunStore()
+    runs = store.list_runs(None if show_all else [RunStatus.QUEUED, RunStatus.RUNNING])
+    if not runs:
+        click.echo("No runs" if show_all else "No active runs")
+        return
+    rows = [["RUN_ID", "STATUS", "PROGRESS", "BENCHMARK", "AGENT", "CREATED"]]
+    for r in runs:
+        results = store.get_task_results(r.run_id)
+        done = sum(t.status in TERMINAL_TASK_STATUSES for t in results)
+        rows.append([
+            r.run_id,
+            _run_state(r),
+            f"{done}/{len(results)}",
+            os.path.basename(r.benchmark),
+            os.path.basename(r.agent),
+            datetime.fromtimestamp(r.created_at).strftime("%Y-%m-%d %H:%M:%S"),
+        ])
+    widths = [max(len(row[i]) for row in rows) for i in range(len(rows[0]))]
+    for row in rows:
+        click.echo("  ".join(cell.ljust(w) for cell, w in zip(row, widths)).rstrip())
 
 
 @cli.command()
@@ -126,19 +155,9 @@ def _get_run(store: RunStore, run_id: str) -> RunRecord:
 def _run_state(record: RunRecord) -> str:
     """The run's status, or 'stale' if it claims to be running but its executor process is gone."""
     active = record.status in (RunStatus.QUEUED, RunStatus.RUNNING)
-    if active and record.pid and not _pid_alive(record.pid):
+    if active and record.pid and not pid_alive(record.pid):
         return f"stale (executor process {record.pid} not running)"
     return record.status.value
-
-
-def _pid_alive(pid: int) -> bool:
-    try:
-        os.kill(pid, 0)  # signal 0 only checks the process exists
-    except ProcessLookupError:
-        return False
-    except PermissionError:  # exists, owned by another user
-        pass
-    return True
 
 
 def main():

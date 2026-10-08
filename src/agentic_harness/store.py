@@ -9,7 +9,7 @@ from contextlib import closing
 from pathlib import Path
 from typing import Any
 
-from agentic_harness.models import RunRecord, TaskResult
+from agentic_harness.models import RunRecord, RunStatus, TaskResult
 
 JSON_COLUMNS = {"task_ids", "config", "details"}
 
@@ -55,9 +55,16 @@ class RunStore:
         with closing(self._connect()) as conn:
             conn.executescript(SCHEMA)
 
-    def create_run(self, agent: str, benchmark: str, task_ids: list[str], config: dict | None = None) -> RunRecord:
-        """Record a new queued run with one pending result per task."""
-        run = RunRecord(uuid.uuid4().hex[:8], agent, benchmark, list(task_ids), config=config or {})
+    def create_run(
+        self,
+        agent: str,
+        benchmark: str,
+        task_ids: list[str],
+        config: dict | None = None,
+        status: RunStatus = RunStatus.QUEUED,
+    ) -> RunRecord:
+        """Record a new run (queued by default) with one pending result per task."""
+        run = RunRecord(uuid.uuid4().hex[:8], agent, benchmark, list(task_ids), status=status, config=config or {})
         with closing(self._connect()) as conn, conn:
             _insert(conn, "runs", _row(run))
             for seq, task_id in enumerate(task_ids):
@@ -78,6 +85,26 @@ class RunStore:
             conn.execute(
                 f"UPDATE runs SET {', '.join(f'{k} = ?' for k in row)} WHERE run_id = ?", [*row.values(), run_id]
             )
+
+    def claim_next_run(self) -> RunRecord | None:
+        """Atomically take the oldest queued run and mark it running; None if the queue is empty."""
+        with closing(self._connect()) as conn, conn:
+            row = conn.execute(
+                "UPDATE runs SET status = ? WHERE status = ? AND run_id = "
+                "(SELECT run_id FROM runs WHERE status = ? ORDER BY created_at, rowid LIMIT 1) RETURNING run_id",
+                (RunStatus.RUNNING, RunStatus.QUEUED, RunStatus.QUEUED),
+            ).fetchone()
+        return self.get_run(row["run_id"]) if row else None
+
+    def list_runs(self, statuses: list[RunStatus] | None = None) -> list[RunRecord]:
+        """Runs newest first, optionally only those with the given statuses."""
+        query, params = "SELECT * FROM runs", []
+        if statuses:
+            query += f" WHERE status IN ({', '.join('?' * len(statuses))})"
+            params = list(statuses)
+        with closing(self._connect()) as conn:
+            rows = conn.execute(query + " ORDER BY created_at DESC, rowid DESC", params).fetchall()
+        return [RunRecord.from_dict(_decode(r)) for r in rows]
 
     def save_task_result(self, run_id: str, result: TaskResult) -> None:
         """Insert or replace one task's result, keeping its position in the run."""

@@ -62,16 +62,28 @@ def test_run_wait_then_status_and_results():
     assert "1/2 (50.0%)" in _invoke("results", "--run_id", run_id, "--format", "summary").output
 
 
-@pytest.mark.docker
-def test_run_detached_completes():
+def test_run_enqueues_without_executing():
     result = _invoke("run", "--agent", SCRIPTED, "--benchmark", "bash-operations", "--task_ids", "bash-001")
-    assert result.exit_code == 0 and "Benchmark run submitted" in result.output
+    assert result.exit_code == 0 and "queued" in result.output and "harness worker" in result.output
     run_id = re.search(r"Run ID: (\w+)", result.output).group(1)
-    store, deadline = RunStore(), time.time() + 120
-    while store.get_run(run_id).status != RunStatus.COMPLETED:
-        assert time.time() < deadline, (store.artifacts_dir(run_id) / "executor.log").read_text()
-        time.sleep(0.5)
-    assert store.get_task_results(run_id)[0].passed is True
+    time.sleep(1)
+    assert RunStore().get_run(run_id).status == RunStatus.QUEUED  # nothing runs until a worker claims it
+
+
+def test_list_shows_active_runs_and_all_with_flag():
+    store = RunStore()
+    queued = store.create_run("/x/agents/scripted", "/x/benchmarks/bash-operations", ["t1", "t2"])
+    done = store.create_run("/x/agents/scripted", "/x/benchmarks/python-tasks", ["t1"])
+    store.update_run(done.run_id, status=RunStatus.COMPLETED)
+    active = _invoke("list").output
+    assert queued.run_id in active and done.run_id not in active
+    assert "bash-operations" in active and "0/2" in active
+    everything = _invoke("list", "--all").output
+    assert queued.run_id in everything and done.run_id in everything
+
+
+def test_list_empty():
+    assert "No active runs" in _invoke("list").output
 
 
 def test_status_reports_stale_when_executor_dead():

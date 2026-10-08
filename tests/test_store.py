@@ -1,3 +1,6 @@
+import subprocess
+import sys
+
 import pytest
 
 from agentic_harness.models import ErrorPhase, RunStatus, TaskResult, TaskStatus
@@ -60,3 +63,40 @@ def test_artifacts_dir_layout(harness_home):
     assert store.artifacts_dir("abc12345") == harness_home / "abc12345"
     task_dir = store.artifacts_dir("abc12345", "bash-001")
     assert task_dir == harness_home / "abc12345" / "tasks" / "bash-001" and task_dir.is_dir()
+
+
+def test_claim_next_run_is_fifo_and_once():
+    store = RunStore()
+    first, second = store.create_run("a", "b", ["t1"]), store.create_run("a", "b", ["t1"])
+    assert store.claim_next_run().run_id == first.run_id
+    claimed = store.claim_next_run()
+    assert claimed.run_id == second.run_id and claimed.status == RunStatus.RUNNING
+    assert store.claim_next_run() is None
+
+
+def test_claim_never_hands_out_a_run_twice_across_processes(harness_home):
+    store = RunStore()
+    queued = {store.create_run("a", "b", ["t1"]).run_id for _ in range(30)}
+    claimer = (
+        "from agentic_harness.store import RunStore\n"
+        "s = RunStore()\n"
+        "while (r := s.claim_next_run()):\n"
+        "    print(r.run_id)\n"
+    )
+    procs = [subprocess.Popen([sys.executable, "-c", claimer], stdout=subprocess.PIPE, text=True) for _ in range(3)]
+    claimed = [line for p in procs for line in p.communicate(timeout=60)[0].split()]
+    assert sorted(claimed) == sorted(queued)  # every run claimed exactly once
+
+
+def test_list_runs_filters_and_orders_newest_first():
+    store = RunStore()
+    old, new = store.create_run("a", "b", ["t1"]), store.create_run("a", "b", ["t1"])
+    store.update_run(old.run_id, status=RunStatus.COMPLETED)
+    assert [r.run_id for r in store.list_runs()] == [new.run_id, old.run_id]
+    assert [r.run_id for r in store.list_runs([RunStatus.QUEUED, RunStatus.RUNNING])] == [new.run_id]
+
+
+def test_create_run_with_status_skips_the_queue():
+    store = RunStore()
+    store.create_run("a", "b", ["t1"], status=RunStatus.RUNNING)
+    assert store.claim_next_run() is None
