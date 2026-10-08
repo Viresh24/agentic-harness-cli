@@ -114,9 +114,9 @@ def test_agent_output_paths_serialize():
 def test_run_summary_to_dict_keys():
     s = RunSummary(
         total=1, passed=1, failed=0, errored=0, pending=0, accuracy=1.0,
-        accuracy_excluding_errors=1.0, mean_score=1.0, total_duration=2.0,
+        accuracy_excluding_errors=1.0, mean_score=1.0,
     )
     assert set(s.to_dict()) == {
         "total", "passed", "failed", "errored", "pending", "accuracy",
-        "accuracy_excluding_errors", "mean_score", "total_duration",
+        "accuracy_excluding_errors", "mean_score",
     }

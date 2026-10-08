@@ -187,4 +187,3 @@ class RunSummary(_Serializable):
     accuracy: float | None
     accuracy_excluding_errors: float | None
     mean_score: float | None
-    total_duration: float
