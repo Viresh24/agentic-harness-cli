@@ -6,13 +6,14 @@ import yaml
 
 from agentic_harness.agents.base import Agent, AgentConfigError, AgentNotFoundError
 from agentic_harness.agents.command import CommandAgent
+from agentic_harness.agents.mini_swe import MiniSweAgent
 
 AGENT_CONFIG = "harness-agent.yaml"
 BUILTIN_CONFIGS = Path(__file__).parent.parent / "agent_configs"
 
-ADAPTERS: dict[str, type[Agent]] = {"command": CommandAgent}
+ADAPTERS: dict[str, type[Agent]] = {"command": CommandAgent, "mini-swe-agent": MiniSweAgent}
 
-__all__ = ["ADAPTERS", "Agent", "AgentConfigError", "AgentNotFoundError", "CommandAgent", "load_agent"]
+__all__ = ["ADAPTERS", "Agent", "AgentConfigError", "AgentNotFoundError", "CommandAgent", "MiniSweAgent", "load_agent"]
 
 
 def load_agent(path: str) -> Agent:

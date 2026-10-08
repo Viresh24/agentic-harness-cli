@@ -32,16 +32,16 @@ def test_eval_outcome_invariants():
     assert EvalOutcome(TaskStatus.FAILED, passed=False, score=0.0).details == {}
 
 
-def test_task_result_from_outcome_copies_agent_fields():
+def test_task_result_from_outcome_copies_agent_exit_status():
     r = TaskResult.from_outcome(
         "t1",
         EvalOutcome(TaskStatus.FAILED, passed=False, score=0.0, details={"k": "v"}),
-        AgentOutput("LimitsExceeded", cost=0.5, steps=50),
+        AgentOutput("LimitsExceeded"),
         started_at=100.0,
         finished_at=112.5,
     )
     assert (r.status, r.passed, r.score, r.details) == (TaskStatus.FAILED, False, 0.0, {"k": "v"})
-    assert (r.cost, r.steps, r.agent_exit_status) == (0.5, 50, "LimitsExceeded")
+    assert r.agent_exit_status == "LimitsExceeded"
     assert r.duration == 12.5
     assert r.error_phase is None
 
@@ -61,8 +61,8 @@ def test_task_result_from_error():
     r = TaskResult.from_error("t", ErrorPhase.SETUP, "boom", 0, 1)
     assert (r.status, r.passed, r.error_phase, r.error, r.duration) == (TaskStatus.ERROR, False, "setup", "boom", 1)
     assert r.agent_exit_status is None
-    with_agent = TaskResult.from_error("t", ErrorPhase.AGENT, "no key", 0, 2, agent=AgentOutput("ConfigError", cost=0.1))
-    assert (with_agent.agent_exit_status, with_agent.cost) == ("ConfigError", 0.1)
+    with_agent = TaskResult.from_error("t", ErrorPhase.AGENT, "no key", 0, 2, agent=AgentOutput("NoTrajectory"))
+    assert with_agent.agent_exit_status == "NoTrajectory"
 
 
 def test_task_result_roundtrip_json():
@@ -74,8 +74,6 @@ def test_task_result_roundtrip_json():
         error="x",
         error_phase=ErrorPhase.SANDBOX,
         duration=3.0,
-        cost=0.25,
-        steps=4,
         agent_exit_status="Timeout",
         started_at=10.0,
         finished_at=13.0,
@@ -116,9 +114,9 @@ def test_agent_output_paths_serialize():
 def test_run_summary_to_dict_keys():
     s = RunSummary(
         total=1, passed=1, failed=0, errored=0, pending=0, accuracy=1.0,
-        accuracy_excluding_errors=1.0, mean_score=1.0, total_cost=None, total_duration=2.0,
+        accuracy_excluding_errors=1.0, mean_score=1.0, total_duration=2.0,
     )
     assert set(s.to_dict()) == {
         "total", "passed", "failed", "errored", "pending", "accuracy",
-        "accuracy_excluding_errors", "mean_score", "total_cost", "total_duration",
+        "accuracy_excluding_errors", "mean_score", "total_duration",
     }

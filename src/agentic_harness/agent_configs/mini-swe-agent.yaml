@@ -1,0 +1,4 @@
+# Harness adapter config for agents/mini-swe-agent (lives here because the submodule isn't ours to edit).
+adapter: mini-swe-agent
+executable: mini          # resolved next to the harness's python first, then PATH
+model: null               # null = mini's configured default (mini-extra config set MSWEA_MODEL_NAME ...)

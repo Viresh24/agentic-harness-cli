@@ -96,8 +96,6 @@ class EvalOutcome:
 @dataclass
 class AgentOutput(_Serializable):
     exit_status: str
-    cost: float | None = None
-    steps: int | None = None
     trajectory_path: Path | None = None
     log_path: Path | None = None
     error: str | None = None  # infra failure only: task becomes ERROR and evaluation is skipped
@@ -112,8 +110,6 @@ class TaskResult(_Serializable):
     error: str | None = None
     error_phase: ErrorPhase | None = None
     duration: float = 0.0
-    cost: float | None = None
-    steps: int | None = None
     agent_exit_status: str | None = None
     started_at: float | None = None
     finished_at: float | None = None
@@ -136,8 +132,6 @@ class TaskResult(_Serializable):
             error=outcome.error,
             error_phase=ErrorPhase.EVALUATE if outcome.status == TaskStatus.ERROR else None,
             duration=finished_at - started_at,
-            cost=agent.cost,
-            steps=agent.steps,
             agent_exit_status=agent.exit_status,
             started_at=started_at,
             finished_at=finished_at,
@@ -160,8 +154,6 @@ class TaskResult(_Serializable):
             error=error,
             error_phase=phase,
             duration=finished_at - started_at,
-            cost=agent.cost if agent else None,
-            steps=agent.steps if agent else None,
             agent_exit_status=agent.exit_status if agent else None,
             started_at=started_at,
             finished_at=finished_at,
@@ -195,5 +187,4 @@ class RunSummary(_Serializable):
     accuracy: float | None
     accuracy_excluding_errors: float | None
     mean_score: float | None
-    total_cost: float | None
     total_duration: float
