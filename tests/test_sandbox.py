@@ -9,7 +9,10 @@ from agentic_harness.sandbox import Sandbox, SandboxError
 
 def _labeled_containers(label: str) -> list[str]:
     out = subprocess.run(
-        ["docker", "ps", "-aq", "--filter", f"label=agentic-harness={label}"], capture_output=True, text=True, check=True
+        ["docker", "ps", "-aq", "--filter", f"label=agentic-harness={label}"],
+        capture_output=True,
+        text=True,
+        check=True,
     )
     return out.stdout.split()
 

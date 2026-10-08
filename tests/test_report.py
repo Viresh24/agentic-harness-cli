@@ -3,7 +3,9 @@ import json
 from agentic_harness.models import ErrorPhase, RunRecord, RunStatus, RunSummary, TaskResult, TaskStatus
 from agentic_harness.report import render_json, render_summary, render_table, summarize
 
-RUN = RunRecord("abc12345", "/abs/agents/mini-swe-agent", "/abs/benchmarks/bash-operations", ["t1"], RunStatus.COMPLETED)
+RUN = RunRecord(
+    "abc12345", "/abs/agents/mini-swe-agent", "/abs/benchmarks/bash-operations", ["t1"], RunStatus.COMPLETED
+)
 
 
 def _result(task_id: str, status: TaskStatus, **kw) -> TaskResult:

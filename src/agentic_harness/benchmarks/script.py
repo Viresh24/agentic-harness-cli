@@ -105,7 +105,13 @@ class ScriptBenchmark(Benchmark):
         start = time.monotonic()
         try:
             proc = subprocess.run(
-                argv, cwd=self.dir, env=env, capture_output=True, text=True, timeout=self.timeout, stdin=subprocess.DEVNULL
+                argv,
+                cwd=self.dir,
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=self.timeout,
+                stdin=subprocess.DEVNULL,
             )
         except subprocess.TimeoutExpired as e:
             _write_logs(log_dir, phase, argv, None, _text(e.stdout), _text(e.stderr), time.monotonic() - start)
@@ -136,7 +142,9 @@ def _text(data: str | bytes | None) -> str:
     return data.decode(errors="replace") if isinstance(data, bytes) else (data or "")
 
 
-def _write_logs(log_dir: Path, phase: str, argv: list[str], returncode: int | None, stdout: str, stderr: str, duration: float):
+def _write_logs(
+    log_dir: Path, phase: str, argv: list[str], returncode: int | None, stdout: str, stderr: str, duration: float
+):
     (log_dir / f"{phase}.stdout").write_text(stdout)
     (log_dir / f"{phase}.stderr").write_text(stderr)
     meta = {"argv": argv, "returncode": returncode, "duration": duration, "timed_out": returncode is None}

@@ -56,7 +56,9 @@ def test_build_command_model_override(tmp_path):
 
 def test_parse_trajectory(tmp_path):
     traj = tmp_path / "trajectory.json"
-    traj.write_text(json.dumps({"info": {"exit_status": "Submitted", "model_stats": {"instance_cost": 0.02, "api_calls": 3}}}))
+    traj.write_text(
+        json.dumps({"info": {"exit_status": "Submitted", "model_stats": {"instance_cost": 0.02, "api_calls": 3}}})
+    )
     out = load_agent(MINI_DIR).parse_trajectory(traj, tmp_path / "agent.log")
     assert (out.exit_status, out.error) == ("Submitted", None)
     assert out.trajectory_path == traj

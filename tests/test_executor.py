@@ -29,7 +29,9 @@ def _run(agent: str, benchmark: str, task_ids: list[str], **config):
 
 
 def test_execute_run_bash_pass_and_fail(tmp_path):
-    store, run, results = _run(_agent(tmp_path, "echo 'Hello World' > hello.txt"), "bash-operations", ["bash-001", "bash-002"])
+    store, run, results = _run(
+        _agent(tmp_path, "echo 'Hello World' > hello.txt"), "bash-operations", ["bash-001", "bash-002"]
+    )
     assert [r.status for r in results] == [TaskStatus.PASSED, TaskStatus.FAILED]
     assert all(r.started_at and r.finished_at and r.agent_exit_status == "Submitted" for r in results)
     assert run.status == RunStatus.COMPLETED and run.pid and run.finished_at
@@ -39,7 +41,9 @@ def test_execute_run_bash_pass_and_fail(tmp_path):
 
 
 def test_execute_run_python_task_passes(tmp_path):
-    _, _, results = _run(_agent(tmp_path, "printf 'def add():\\n    return 4\\n' > solution.py"), "python-tasks", ["py-001"])
+    _, _, results = _run(
+        _agent(tmp_path, "printf 'def add():\\n    return 4\\n' > solution.py"), "python-tasks", ["py-001"]
+    )
     assert results[0].status == TaskStatus.PASSED
 
 
@@ -56,7 +60,9 @@ def test_agent_timeout_still_evaluates_and_cleans_container(tmp_path):
     _, run, results = _run(agent, "bash-operations", ["bash-001"], task_timeout=3)
     assert (results[0].agent_exit_status, results[0].status) == ("Timeout", TaskStatus.PASSED)
     leftover = subprocess.run(
-        ["docker", "ps", "-aq", "--filter", f"label=agentic-harness={run.run_id}-bash-001"], capture_output=True, text=True
+        ["docker", "ps", "-aq", "--filter", f"label=agentic-harness={run.run_id}-bash-001"],
+        capture_output=True,
+        text=True,
     )
     assert leftover.stdout.split() == []
 
@@ -64,8 +70,15 @@ def test_agent_timeout_still_evaluates_and_cleans_container(tmp_path):
 def test_infra_error_marks_task_error_not_run_failed(tmp_path):
     bench = tmp_path / "bad-image"
     bench.mkdir()
-    (bench / "dataset.json").write_text(json.dumps([{"key": "toy-ok", "question": "q", "image": "agentic-harness-does-not-exist:nope"}]))
-    manifest = (TOY / "harness.yaml").read_text().replace('"setup.py"', f'"{TOY}/setup.py"').replace('"check.py"', f'"{TOY}/check.py"')
+    (bench / "dataset.json").write_text(
+        json.dumps([{"key": "toy-ok", "question": "q", "image": "agentic-harness-does-not-exist:nope"}])
+    )
+    manifest = (
+        (TOY / "harness.yaml")
+        .read_text()
+        .replace('"setup.py"', f'"{TOY}/setup.py"')
+        .replace('"check.py"', f'"{TOY}/check.py"')
+    )
     (bench / "harness.yaml").write_text(manifest)
     _, run, results = _run(_agent(tmp_path, "true"), str(bench), ["toy-ok"])
     assert (results[0].status, results[0].error_phase) == (TaskStatus.ERROR, ErrorPhase.SANDBOX)
@@ -94,4 +107,6 @@ def test_sigterm_marks_run_failed_and_cleans_container(tmp_path, harness_home):
     proc.wait(timeout=60)
     failed = store.get_run(run.run_id)
     assert (failed.status, failed.error) == (RunStatus.FAILED, "interrupted")
-    assert subprocess.run(["docker", "ps", "-aq", "--filter", label], capture_output=True, text=True).stdout.split() == []
+    assert (
+        subprocess.run(["docker", "ps", "-aq", "--filter", label], capture_output=True, text=True).stdout.split() == []
+    )

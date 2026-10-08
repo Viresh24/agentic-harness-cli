@@ -7,6 +7,7 @@ import shutil
 import signal
 import threading
 import time
+from collections.abc import Callable
 
 from agentic_harness.agents import Agent, load_agent
 from agentic_harness.benchmarks import Benchmark, BenchmarkError, load_benchmark
@@ -17,7 +18,9 @@ from agentic_harness.store import RunStore
 DEFAULT_TASK_TIMEOUT = 900
 
 
-def execute_run(run_id: str, store: RunStore | None = None) -> RunRecord:
+def execute_run(
+    run_id: str, store: RunStore | None = None, on_task_done: Callable[[TaskResult], None] | None = None
+) -> RunRecord:
     """Run every task of a stored run in order and mark the run completed (or failed if the executor crashes)."""
     store = store or RunStore()
     run = store.get_run(run_id)
@@ -30,7 +33,9 @@ def execute_run(run_id: str, store: RunStore | None = None) -> RunRecord:
         benchmark, agent = load_benchmark(run.benchmark), load_agent(run.agent)
         timeout = run.config.get("task_timeout", DEFAULT_TASK_TIMEOUT)
         for task in benchmark.get_tasks(run.task_ids):
-            run_task(task, benchmark, agent, store, run_id, timeout)
+            result = run_task(task, benchmark, agent, store, run_id, timeout)
+            if on_task_done:
+                on_task_done(result)
     except BaseException as e:
         reason = "interrupted" if isinstance(e, KeyboardInterrupt) else f"{type(e).__name__}: {e}"
         store.update_run(run_id, status=RunStatus.FAILED, finished_at=time.time(), error=reason)
@@ -41,7 +46,9 @@ def execute_run(run_id: str, store: RunStore | None = None) -> RunRecord:
     return store.get_run(run_id)
 
 
-def run_task(task: Task, benchmark: Benchmark, agent: Agent, store: RunStore, run_id: str, timeout: float) -> TaskResult:
+def run_task(
+    task: Task, benchmark: Benchmark, agent: Agent, store: RunStore, run_id: str, timeout: float
+) -> TaskResult:
     """Run one task in a fresh workspace and container, then save its result."""
     task_dir = store.artifacts_dir(run_id, task.id)
     workspace = task_dir / "workspace"

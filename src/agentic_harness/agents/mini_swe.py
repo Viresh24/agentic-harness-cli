@@ -70,7 +70,11 @@ class MiniSweAgent(Agent):
         if traj.is_file():
             return self.parse_trajectory(traj, log)
         tail = "\n".join(log.read_text(errors="replace").strip().splitlines()[-LOG_TAIL_LINES:])
-        return AgentOutput("NoTrajectory", log_path=log, error=f"mini exited {proc.returncode} without a trajectory (if mini isn't set up, run: mini-extra config setup):\n{tail}")
+        error = (
+            f"mini exited {proc.returncode} without a trajectory "
+            f"(if mini isn't set up, run: mini-extra config setup):\n{tail}"
+        )
+        return AgentOutput("NoTrajectory", log_path=log, error=error)
 
 
 def _resolve_executable(name: str) -> str:
