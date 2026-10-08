@@ -1,0 +1,10 @@
+# Harness adapter for python-tasks. The benchmark's own scripts are unchanged.
+name: python-tasks
+dataset: dataset.json
+fields: {id: id, prompt: prompt, docker_image: docker_image}
+setup: ["{python}", "prepare.py", "{task_id}", "--workspace", "{workspace}"]
+evaluate: ["{python}", "grade.py", "{task_id}", "--workspace", "{workspace}"]
+pass_from: json.passed    # grade.py always exits 0; the verdict is in its JSON
+# The dataset prompts never say where to write code, so tell the agent.
+prompt_template: "{prompt}\n\nWrite your solution in `{solution_file}` in the current working directory. It will be tested with pytest using test_solution.py."
+timeout: 120

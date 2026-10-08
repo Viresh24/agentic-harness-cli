@@ -1,0 +1,7 @@
+name: toy
+dataset: dataset.json
+fields: {id: key, prompt: question, docker_image: image}
+setup: ["{python}", "setup.py", "{workspace}", "{task_id}"]
+evaluate: ["{python}", "check.py", "{workspace}", "{task_id}"]
+pass_from: json.passed
+timeout: 30

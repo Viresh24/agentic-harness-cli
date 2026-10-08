@@ -1,0 +1,9 @@
+# Harness adapter for bash-operations. The benchmark's own scripts are unchanged.
+name: bash-operations
+dataset: dataset.json
+fields: {id: task_id, prompt: problem_statement, docker_image: docker_image}
+setup: ["{python}", "setup.py", "--workspace-dir", "{workspace}", "--task", "{task_id}"]
+evaluate: ["{python}", "evaluate.py", "--workspace-dir", "{workspace}", "--task", "{task_id}"]
+pass_from: exit_code      # evaluate.py exits 0 = pass, 1 = fail
+prompt_template: "{prompt}"
+timeout: 120

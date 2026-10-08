@@ -1,0 +1,5 @@
+[
+  {"key": "toy-ok", "question": "Do nothing.", "image": "alpine:latest", "setup_exit": 0, "check": "pass"},
+  {"key": "toy-badjson", "question": "Do nothing.", "image": "alpine:latest", "setup_exit": 0, "check": "traceback"},
+  {"key": "toy-badsetup", "question": "Do nothing.", "image": "alpine:latest", "setup_exit": 2, "check": "pass"}
+]

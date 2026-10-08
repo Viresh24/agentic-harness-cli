@@ -1,0 +1,8 @@
+# Exercises the `class:` escape hatch; reuses the toy dataset via ScriptBenchmark itself.
+class: "agentic_harness.benchmarks.script:ScriptBenchmark"
+name: custom-class
+dataset: ../toy/dataset.json
+fields: {id: key, prompt: question, docker_image: image}
+setup: ["{python}", "../toy/setup.py", "{workspace}", "{task_id}"]
+evaluate: ["{python}", "../toy/check.py", "{workspace}", "{task_id}"]
+pass_from: json.passed
